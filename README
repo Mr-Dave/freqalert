@@ -1,0 +1,22 @@
+freqalert 0.1.0 - MrDave
+
+freqalert is a very simple program to detect a particular frequency and if it is
+detected, execute a external command.  To make the program the following libraries
+are needed (based upon current apt repo).
+
+sudo apt-get install portaudio19-dev libfftw3-dev libsndfile1-dev
+
+After the packages are installed, type 
+
+make
+
+Once freqalert is built, type 
+
+freqalert -i
+
+to display the devices on the computer and then adjust the freqalert.conf
+file to specify the desired device and its associated parameters.  
+
+NOTE:  This program is very rough.  It seems functional but may include significant
+flaws that I will continue to investigate and resolve as I learn more about sound
+processing.
