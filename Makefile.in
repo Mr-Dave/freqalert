@@ -1,0 +1,201 @@
+################################################################################
+################################################################################
+# This program is published under the GNU public license version 2.0 or later. #
+# Please read the file COPYING for more info.                                  #
+################################################################################
+
+CC      = @CC@
+INSTALL = install
+INSTALL_DATA = ${INSTALL} -m 644
+
+################################################################################
+# Install locations, controlled by setting configure flags.                    #
+################################################################################
+prefix      = @prefix@
+exec_prefix = @exec_prefix@
+bindir      = @bindir@
+mandir      = @mandir@
+sysconfdir  = @sysconfdir@
+datadir     = @datadir@
+datarootdir = @datarootdir@
+docdir      = $(datadir)/doc/@PACKAGE_NAME@
+examplesdir = $(datadir)/@PACKAGE_NAME@/examples
+localedir   = @localedir@
+
+################################################################################
+# These variables contain compiler flags, object files to build and files to   #
+# install.                                                                     #
+################################################################################
+CFLAGS       = @CFLAGS@ -Wall \
+	 -DVERSION=\"@PACKAGE_VERSION@\" \
+	 -Dsysconfdir=\"$(sysconfdir)\"  \
+	 -DLOCALEDIR=\"$(DESTDIR)$(localedir)\"    \
+	 -DDOCDIR=\"$(DESTDIR)$(docdir)\"
+LDFLAGS      = @LDFLAGS@
+LIBS         = @LIBS@
+OBJ          = freqalert.o parms.o
+SRC          = $(foreach obj,$(OBJ:.o=.c),@top_srcdir@/$(obj))
+DOC          = README.md
+DOC_FILES    = $(foreach doc,$(DOC),@top_srcdir@/$(doc))
+EXAMPLES     = *.conf
+PROGS        = freqalert
+DEPEND_FILE  = .depend
+LANGCDS      = @LANGCDS@
+
+################################################################################
+# ALL and PROGS build Motion and, possibly, Motion-control.                    #
+################################################################################
+all: progs
+	@echo "Build complete, run \"make install\" to install"
+	@echo
+
+progs: pre-build-info $(PROGS)
+
+################################################################################
+# PRE-BUILD-INFO outputs some general info before the build process starts.    #
+################################################################################
+pre-build-info:
+	@echo
+	@echo "Version: @PACKAGE_VERSION@"
+	@echo
+
+################################################################################
+################################################################################
+freqalert: prog-objects
+	@echo "Linking..."
+	@echo "--------------------------------------------------------------------------------"
+	$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+	@echo "--------------------------------------------------------------------------------"
+	@echo "Linking complete."
+	@echo
+
+prog-objects: dep pre-mobject-info $(OBJ)
+	@echo "--------------------------------------------------------------------------------"
+	@echo "Object files compiled."
+	@echo
+
+pre-mobject-info:
+	@echo "Compiling object files..."
+	@echo "--------------------------------------------------------------------------------"
+
+################################################################################
+# Define the compile command for C files.                                      #
+################################################################################
+%.o: @top_srcdir@/%.c
+	@echo -e "\tCompiling $< into $@..."
+	@$(CC) -c $(CFLAGS) -I@top_builddir@ $< -o $@
+
+################################################################################
+# Include the dependency file if it exists.                                    #
+################################################################################
+ifeq ($(DEPEND_FILE), $(wildcard $(DEPEND_FILE)))
+ifeq (,$(findstring clean,$(MAKECMDGOALS)))
+-include $(DEPEND_FILE)
+endif
+endif
+
+################################################################################
+# Make the dependency file depend on all header files and all relevant source  #
+# files. This forces the file to be re-generated if the source/header files    #
+# change. Note, however, that the existing version will be included before     #
+# re-generation.                                                               #
+################################################################################
+$(DEPEND_FILE): *.h $(SRC)
+	@echo "Generating dependencies, please wait..."
+	@$(CC) $(CFLAGS) -I@top_builddir@ -M $(SRC) > .tmp
+	@mv -f .tmp $(DEPEND_FILE)
+	@echo
+
+################################################################################
+# DEP, DEPEND and FASTDEP generate the dependency file.                        #
+################################################################################
+dep depend fastdep: $(DEPEND_FILE)
+
+################################################################################
+# DEV, BUILD with developer flags                                              #
+################################################################################
+dev: distclean autotools all
+
+autotools:
+	autoconf
+	./configure
+
+help:
+	@echo "--------------------------------------------------------------------------------"
+	@echo "make                   Build local copy in your computer"
+	@echo "make clean             Clean objects"
+	@echo "make distclean         Clean everything"
+	@echo "make install           Install binary , examples , docs and config files"
+	@echo "make uninstall         Uninstall all installed files"
+	@echo "--------------------------------------------------------------------------------"
+	@echo
+
+
+################################################################################
+# INSTALL installs all relevant files.                                         #
+################################################################################
+install:
+	@echo "Installing files..."
+	@echo "--------------------------------------------------------------------------------"
+	mkdir -p $(DESTDIR)$(bindir)
+	mkdir -p $(DESTDIR)$(mandir)/man1
+	mkdir -p $(DESTDIR)$(sysconfdir)/freqalert
+	mkdir -p $(DESTDIR)$(docdir)
+	mkdir -p $(DESTDIR)$(examplesdir)
+	$(INSTALL_DATA) $(DOC_FILES) $(DESTDIR)$(docdir)
+	$(INSTALL_DATA) $(EXAMPLES) $(DESTDIR)$(examplesdir)
+	$(INSTALL_DATA) freqalert.conf $(DESTDIR)$(sysconfdir)/freqalert
+	@for prog in $(PROGS); \
+	do \
+	($(INSTALL) $$prog $(DESTDIR)$(bindir) ); \
+	done
+	@echo "--------------------------------------------------------------------------------"
+	@echo "Install complete!"
+	@echo
+
+################################################################################
+# UNINSTALL and REMOVE uninstall already installed files.                      #
+################################################################################
+uninstall remove: pre-build-info
+	@echo "Uninstalling files..."
+	@echo "--------------------------------------------------------------------------------"
+	for prog in $(PROGS); \
+	do \
+		($ rm -f $(bindir)/$$prog ); \
+	done
+	rm -f $(sysconfdir)/freqalert/freqalert.conf
+	rm -rf $(docdir)
+	rm -rf $(examplesdir)
+	@echo "--------------------------------------------------------------------------------"
+	@echo "Uninstall complete!"
+	@echo
+
+################################################################################
+# CLEAN is basic cleaning; removes object files and executables, but does not  #
+# remove files generated from the configure step.                              #
+################################################################################
+clean: pre-build-info
+	@echo "Removing compiled files and binaries..."
+	@rm -f *~ *.o $(PROGS) combine $(DEPEND_FILE)
+	@rm -f ./po/*.mo
+
+################################################################################
+# DIST restores the directory to distribution state.                           #
+################################################################################
+dist: distclean
+	@chmod -R 644 *
+	@chmod 755 configure
+	@chmod 755 version.sh
+
+################################################################################
+# DISTCLEAN removes all files generated during the configure step in addition  #
+# to basic cleaning.                                                           #
+################################################################################
+distclean: clean
+	@echo "Removing files generated by configure..."
+	@rm -f config.status config.log config.cache Makefile
+	@rm -rf autom4te.cache config.h
+	@echo "You will need to re-run configure if you want to build."
+	@echo
+
+.PHONY: install

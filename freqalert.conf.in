@@ -1,0 +1,56 @@
+#############################################
+# verbosity
+#  0=silent
+#  1=quiet
+#  2=chatty
+#  3=chatty and show freq values
+verbosity = 3
+#############################################
+##
+##  Volume_Triggers is the count of times in which
+##  the sound has exceeded the lowest volume level
+##  specified in all of the alerts
+##
+volume_triggers =5
+#############################################
+## Audio parameters and device.
+#############################################
+sample_rate= 44100
+channels=1
+device = hw:0,0
+frames_per_buffer = 2048
+#############################################
+#############################################
+##  Specify Alert 00 parameters
+##  Add additional alerts by changing
+##  00 to 01,02,...99
+##  Frequencies will be calculated in multiples
+##  that depend upon the sample rate and bin size
+##  so make sure to use ranges
+##  from low to high is big enough to capture
+##  the frequency.
+##  Current program parameters have a maximum frequency
+##  resolution of samplerate / 8192. This means that
+##  all frequencies will be reported as multiples of
+##  that resolution.  Using a sample rate of 44100,
+##  the maximum resolution would be 44100 / 8192
+##  which equals 5.38330078125Hz.  So for example
+##  if the true freqency was around 2030 it will reported as
+##    2029.5043 = (5.38Hz * 377) or
+##    2034.8876 = (5.38Hz * 388)
+##  It will never be the exact 2030.
+#############################################
+alert_00_freq_low=2028
+alert_00_freq_high=2031
+alert_00_duration = 10
+alert_00_command = mousepad
+alert_00_volume_level = 10
+#############################################
+##  Alert 01 parameters
+#############################################
+alert_01_freq_low=3630.000
+alert_01_freq_high=3700.000
+alert_01_duration = 1
+alert_01_command = /home/dave/sendsmokealarmalert.sh
+alert_01_volume_level = 10
+#############################################

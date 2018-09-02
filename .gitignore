@@ -1,0 +1,13 @@
+Makefile
+config.h
+freqalert
+freqalert.conf
+*.o
+*.log
+.depend
+autom4te.cache
+aclocal.m4
+config.status
+configure
+config.h.in
+.vscode/
